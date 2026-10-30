@@ -1,0 +1,30 @@
+name: Artifact Validation
+on:
+  workflow_dispatch:
+    inputs:
+      complete:
+        type: boolean
+        default: false
+        description: Include required status file
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir dist
+          cp README.md dist/
+          if [ "${{ inputs.complete }}" = "true" ]; then echo OK > dist/status.txt; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: dist/
+          retention-days: 7
+  validate:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-output
+      - run: test -f README.md && test -f status.txt
